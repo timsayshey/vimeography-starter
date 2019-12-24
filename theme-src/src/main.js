@@ -1,41 +1,82 @@
+__webpack_public_path__ = window.vimeographyBuildPath
+
 import Vue from 'vue'
-import App from './App.vue'
-import router from './router'
 import Vuex from 'vuex'
+import VueRouter from 'vue-router'
+import VueObserveVisibility from 'vue-observe-visibility'
+import VueLazyload from 'vue-lazyload'
+
 Vue.use(Vuex)
+Vue.use(VueRouter)
+Vue.use(VueObserveVisibility)
+Vue.use(VueLazyload)
 
-import {
-  Player,
-  Lightbox,
-  Search,
-  Filters,
-  DownloadLink,
-  PagingControls,
-  Mixins
-} from 'vimeography-blueprint'
+Vue.config.devtools = true
 
-Vue.component('player', Player)
-Vue.component('lightbox', Lightbox)
-Vue.component('search', Search)
-Vue.component('filters', Filters)
-Vue.component('download-link', DownloadLink)
-Vue.component('paging-controls', PagingControls)
-Vue.component('mixins', Mixins)
+import Gallery from './components/Gallery.vue'
+import { storeModules } from 'vimeography-blueprint'
 
-import cloneDeep from 'lodash.clonedeep'
+import head from 'lodash/head'
+import cloneDeep from 'lodash/cloneDeep'
+var URLSearchParams = require('url-search-params')
 
-Vue.config.productionTip = false
-import storeModules from './store'
+const router = new VueRouter({
+  mode: window.vimeographyRouterMode,
+  routes: [{ path: '/', component: Gallery, props: true, name: 'gallery' }]
+})
 
-for (var id in window.vimeography2.galleries.starter) {
+let params = new URLSearchParams(location.search.slice(1))
+
+/**
+ * https://github.com/webpack/webpack-dev-server/issues/100
+ * @param  {[type]} Component [description]
+ * @return {[type]}           [description]
+ */
+const render = (Component, galleryId, store) => {
+  // We use concatenation here so Vimeography Blueprint doesn't get confused
+  // with this line when generating new themes.
+  const mount = '#vimeography-gallery-' + galleryId + ' > div'
+  const gallery = window.vimeography2.galleries.starter[galleryId]
+  const firstVideoId = head(
+    gallery.pages.default[Object.keys(gallery.pages.default)[0]]
+  )
+  const activeVideoId =
+    params.get('vimeography_video') &&
+    params.get('vimeography_gallery') == galleryId
+      ? parseInt(params.get('vimeography_video'))
+      : parseInt(firstVideoId)
+
+  store.commit({
+    type: 'vimeography/gallery/LOAD',
+    ...gallery,
+    activeVideoId
+  })
+
   new Vue({
+    el: mount,
+    store,
     router,
-    render: h => h(App),
-    store: new Vuex.Store({
-      modules: cloneDeep(storeModules)
-    }),
-    data: {
-      id
-    }
-  }).$mount('#vimeography-gallery-' + id + ' > div')
+    render: h => h(Component)
+  })
+}
+
+for (let id in window.vimeography2.galleries.starter) {
+  let store = new Vuex.Store({ modules: cloneDeep(storeModules) })
+  render(Gallery, id, store)
+}
+
+// Set default page route, if applicable
+// router.replace('vimeography');
+
+// This also works.
+
+// if (module.hot) {
+//   module.hot.accept('./components/Gallery', () => {
+//     const NextGallery = require('./components/Gallery').default
+//     render(NextGallery)
+//   })
+// }
+
+if (module.hot) {
+  module.hot.accept()
 }

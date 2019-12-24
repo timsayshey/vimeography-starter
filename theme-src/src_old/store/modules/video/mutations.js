@@ -8,6 +8,9 @@ const mutations = {
     payload = payload.payload
 
     state.items = payload.video_set
+    if (payload.activeVideoId == undefined) {
+      payload.activeVideoId = Object.keys(payload.video_set)[0]
+    }
     state.active = parseInt(payload.activeVideoId)
 
     state.pages = {
