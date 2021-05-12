@@ -16,7 +16,7 @@
     "lodash.clonedeep": "^4.5.0",
     "node-sass": "^4.13.0",
     "sass-loader": "^8.0.0",
-    "swiper": "^5.2.1",
+    "swiper": "^6.5.1",
     "url-search-params": "^1.1.0",
     "vimeography-blueprint": "https://github.com/timsayshey/vimeography-blueprint",
     "vue": "^2.6.11",
